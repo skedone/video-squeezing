@@ -1,6 +1,9 @@
 This snippet is meant to be used for optimizing video on a WebKit-based browser, with very low bandwith.
 It is not meant to be used (or reused).
 
+# Install FFMpeg
+If you don't have FFMpeg installed and you are using Ubuntu, [you can install everything in this way](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu)
+
 # Install
 
 ```
