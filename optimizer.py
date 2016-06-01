@@ -17,6 +17,8 @@ FFMPEG_OPTIONS = '-codec:v libx264 -profile:v main -preset slow -movflags fastst
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
+source_dir = False
+
 @click.command()
 @click.option('--source', default='.', help='Directory where to find videos.')
 @click.option('--force-yes', default=False, help='Do not prompt yes/no')
@@ -30,6 +32,8 @@ def optimize(source, force_yes, workers):
     :param workers: Number of processes to spawn.
     :return:
     """
+    global source_dir
+    source_dir = source
 
     matches = []
     for filename in iter_matching(source, re.compile(r'.*\.(mp4|wmv|ogv|avi|flv)$').match):
@@ -40,13 +44,22 @@ def optimize(source, force_yes, workers):
     click.echo(pool.map(ffmpeg, matches))
 
 
-def ffmpeg(file_input):
+def ffmpeg(file_input, root_output='output'):
 
     """
     Transcode files
     :param file_input: Name of the file to transcode.
     :return:
     """
+
+    # output_dir = os.path.join(source_dir, '/', os.path.dirname(file_input))
+    output_dir = os.path.join(root_output, os.path.normpath(os.path.relpath(os.path.dirname(file_input), source_dir)))
+    click.echo("Folders: " + output_dir)
+
+    if os.path.exists(output_dir):
+        click.echo("Folder " + output_dir + " already exists.")
+    else:
+        os.makedirs(output_dir)
 
     duration = 0
     start_time = current_milli_time()
@@ -56,7 +69,7 @@ def ffmpeg(file_input):
             duration = stream.durationSeconds()
 
     try:
-        ff = ffmpy.FF(inputs={file_input: None}, outputs={'output/' + os.path.basename(file_input): FFMPEG_OPTIONS})
+        ff = ffmpy.FF(inputs={file_input: None}, outputs={os.path.abspath(os.path.join(output_dir, os.path.basename(file_input))): FFMPEG_OPTIONS})
         click.echo(ff.cmd_str)
         ff.run()
     except:
